@@ -58,17 +58,18 @@ void NewMapsMenu(int client)
 	{
 		MapInfo MapInfo_RecentUploads;
 		gA_NewestMaps.GetArray(i, MapInfo_RecentUploads);
-		
+
 		int MapTier = Shavit_GetMapTier(MapInfo_RecentUploads.MapName);
-		
+
 		char TimeParsed[32];
 		FormatTime(TimeParsed, 32, "%Y/%m/%d %H:%M", MapInfo_RecentUploads.TimeStamp);
-		
+
 		char Display[255];
 		Format(Display, 255, "%s | %s [T%i]", TimeParsed, MapInfo_RecentUploads.MapName, MapTier);
-		
+
 		g_NewestMapsMenu.AddItem(MapInfo_RecentUploads.MapName, Display);
 	}
+
 	g_NewestMapsMenu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -78,8 +79,9 @@ public int Handler_NewestMaps(Menu g_NewestMapsMenu, MenuAction action, int clie
 	{
 		char Handler_MapName[256];
 		g_NewestMapsMenu.GetItem(choice, Handler_MapName, 256);
-		
+
 		FakeClientCommand(client, "sm_nominate %s", Handler_MapName);
+
 		g_NewestMapsMenu.Display(client, MENU_TIME_FOREVER);
 	}
 
@@ -89,10 +91,10 @@ public int Handler_NewestMaps(Menu g_NewestMapsMenu, MenuAction action, int clie
 stock void UpdateMapsList()
 {
 	gA_NewestMaps.Clear();
-	
+
 	char path[PLATFORM_MAX_PATH];
 	Handle dir = OpenDirectory("maps/");
-	
+
 	if(dir != INVALID_HANDLE)
 	{
 		char MapName[PLATFORM_MAX_PATH];
@@ -106,12 +108,13 @@ stock void UpdateMapsList()
 				ReplaceString(MapName, PLATFORM_MAX_PATH, ".bsp", "", false);
 				MapInfo_RecentUploads.MapName = MapName;
 				MapInfo_RecentUploads.TimeStamp = GetFileTime(path, FileTime_LastChange);
+
 				gA_NewestMaps.PushArray(MapInfo_RecentUploads);
 			}
 		}
 		CloseHandle(dir);
 	}
-	
+
 	else 
 	{
 		PrintToServer("Failed to open dir");
