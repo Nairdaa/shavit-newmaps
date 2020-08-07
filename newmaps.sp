@@ -112,9 +112,9 @@ stock void UpdateMapsList()
 				gA_NewestMaps.PushArray(MapInfo_RecentUploads);
 			}
 		}
+
 		CloseHandle(dir);
 	}
-
 	else 
 	{
 		PrintToServer("Failed to open dir");
