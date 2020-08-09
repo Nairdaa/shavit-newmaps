@@ -1,21 +1,22 @@
 /* Header files */
 #include <sourcemod>
 #include <shavit>
+#include <convar_class>
 
 /* Preprocessor directives */
 #pragma semicolon 1
 #pragma newdecls required
 
-#define MAX_MAPS_TO_SHOW 15 // Placeholder, gonna add a .cfg
-
-
 /* Globals */
 ArrayList gA_NewestMaps;
+
+/* CVARs */
+Convar gCV_MaxMapsToShow = null;
 
 /* Plugin information */
 public Plugin myinfo =
 {
-	name = "NewMaps",
+	name = "Recently uploaded maps",
 	author = "Nairda",
 	/* Thank you so much, Deadwinter, for all your help with Pawn and teaching me. Your patience with my stupidity is insane. Big love. */
 	description = "Shows recently uploaded maps to the server.",
@@ -32,6 +33,10 @@ public void OnPluginStart()
 {
   	gA_NewestMaps = new ArrayList(sizeof(MapInfo));
 	RegConsoleCmd("sm_newmaps", NewestMaps, "List maps recently uploaded to the server. Sorted by date of upload.");
+	
+	gCV_MaxMapsToShow = new Convar("max_maps_to_show", "25", "How many maps to print in the menu?", 0, true, 1.0, true, 100.0);
+	
+	Convar.AutoExecConfig();
 }
 
 public Action NewestMaps(int client, int args) 
@@ -49,10 +54,10 @@ public Action NewestMaps(int client, int args)
 
 void NewMapsMenu(int client)
 {
-	Menu g_NewestMapsMenu = new Menu(Handler_NewestMaps, MENU_ACTIONS_ALL);
-	g_NewestMapsMenu.SetTitle("New maps:");
+	Menu menu = new Menu(Handler_NewestMaps, MENU_ACTIONS_ALL);
+	menu.SetTitle("New maps (Showing %i newest):\nTime | Map [Tier]", gCV_MaxMapsToShow.IntValue);
 
-	int i_MapsCount = (MAX_MAPS_TO_SHOW < gA_NewestMaps.Length) ? MAX_MAPS_TO_SHOW : gA_NewestMaps.Length;
+	int i_MapsCount = (gCV_MaxMapsToShow.IntValue < gA_NewestMaps.Length) ? gCV_MaxMapsToShow.IntValue : gA_NewestMaps.Length;
 
 	for (int i = 0; i < i_MapsCount; i++)
 	{
@@ -67,22 +72,22 @@ void NewMapsMenu(int client)
 		char Display[255];
 		Format(Display, 255, "%s | %s [T%i]", TimeParsed, MapInfo_RecentUploads.MapName, MapTier);
 
-		g_NewestMapsMenu.AddItem(MapInfo_RecentUploads.MapName, Display);
+		menu.AddItem(MapInfo_RecentUploads.MapName, Display);
 	}
 
-	g_NewestMapsMenu.Display(client, MENU_TIME_FOREVER);
+	menu.Display(client, MENU_TIME_FOREVER);
 }
 
-public int Handler_NewestMaps(Menu g_NewestMapsMenu, MenuAction action, int client, int choice)
+public int Handler_NewestMaps(Menu menu, MenuAction action, int client, int choice)
 {
 	if(action == MenuAction_Select)
 	{
 		char Handler_MapName[256];
-		g_NewestMapsMenu.GetItem(choice, Handler_MapName, 256);
+		menu.GetItem(choice, Handler_MapName, 256);
 
 		FakeClientCommand(client, "sm_nominate %s", Handler_MapName);
 
-		g_NewestMapsMenu.Display(client, MENU_TIME_FOREVER);
+		menu.Display(client, MENU_TIME_FOREVER);
 	}
 
 	return 0;
@@ -115,9 +120,9 @@ stock void UpdateMapsList()
 
 		CloseHandle(dir);
 	}
-	else 
+	else
 	{
-		PrintToServer("Failed to open dir");
+		PrintToServer("Failed to open the /maps directory.");
 	}
 	
 	gA_NewestMaps.Sort(Sort_Descending, Sort_Integer);
