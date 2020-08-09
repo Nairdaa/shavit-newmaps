@@ -55,7 +55,7 @@ public Action NewestMaps(int client, int args)
 void NewMapsMenu(int client)
 {
 	Menu menu = new Menu(Handler_NewestMaps, MENU_ACTIONS_ALL);
-	menu.SetTitle("New maps (Showing %i newest):\nTime | Map [Tier]", gCV_MaxMapsToShow.IntValue);
+	menu.SetTitle("New maps (Showing %i newest):\nDate | Map [Tier]", gCV_MaxMapsToShow.IntValue);
 
 	int i_MapsCount = (gCV_MaxMapsToShow.IntValue < gA_NewestMaps.Length) ? gCV_MaxMapsToShow.IntValue : gA_NewestMaps.Length;
 
