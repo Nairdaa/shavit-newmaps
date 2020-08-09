@@ -18,7 +18,7 @@ public Plugin myinfo =
 {
 	name = "Recently uploaded maps",
 	author = "Nairda",
-	/* Thank you so much, Deadwinter, for all your help with Pawn and teaching me. Your patience with my stupidity is insane. Big love. */
+	/* Thank you so much, Deadwinter */
 	description = "Shows recently uploaded maps to the server.",
 	url = "https://steamcommunity.com/id/nairda1339/"
 };
@@ -32,7 +32,7 @@ enum struct MapInfo
 public void OnPluginStart()
 {
   	gA_NewestMaps = new ArrayList(sizeof(MapInfo));
-	RegConsoleCmd("sm_newmaps", NewestMaps, "List maps recently uploaded to the server. Sorted by date of upload.");
+	RegConsoleCmd("sm_newmaps", NewestMaps, "List maps recently uploaded to the server. Sorting by date of upload.");
 	
 	gCV_MaxMapsToShow = new Convar("max_maps_to_show", "25", "How many maps to print in the menu?", 0, true, 1.0, true, 100.0);
 	
