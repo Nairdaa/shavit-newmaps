@@ -32,7 +32,7 @@ enum struct MapInfo
 public void OnPluginStart()
 {
   	gA_NewestMaps = new ArrayList(sizeof(MapInfo));
-	RegConsoleCmd("sm_newmaps", NewestMaps, "List maps recently uploaded to the server. Sorting by date of upload.");
+	RegConsoleCmd("sm_newmaps", NewestMaps, "Lists maps recently uploaded to the server, sorted by the date of upload.");
 	
 	gCV_MaxMapsToShow = new Convar("max_maps_to_show", "25", "How many maps to print in the menu?", 0, true, 1.0, true, 100.0);
 	
