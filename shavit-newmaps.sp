@@ -1,110 +1,129 @@
+/* Header files */
+#include <sourcemod>
 #include <shavit>
- 
+#include <convar_class>
+
+/* Preprocessor directives */
+#pragma semicolon 1
+#pragma newdecls required
+
+/* Globals */
+ArrayList gA_NewestMaps;
+
+/* CVARs */
+Convar gCV_MaxMapsToShow = null;
+
+/* Plugin information */
+public Plugin myinfo =
+{
+	name = "Recently uploaded maps",
+	author = "Nairda",
+	/* Thank you so much, Deadwinter */
+	description = "Shows recently uploaded maps to the server.",
+	url = "https://steamcommunity.com/id/nairda1339/"
+};
+
+enum struct MapInfo 
+{
+    int TimeStamp;
+    char MapName[PLATFORM_MAX_PATH];
+}
+
 public void OnPluginStart()
 {
-	RegConsoleCmd("sm_newmaps", Command_AddedMaps);
-	RegConsoleCmd("sm_nm", Command_AddedMaps);
-	RegConsoleCmd("sm_newmapsm", Command_AddedMaps_Main);
-	RegConsoleCmd("sm_nmm", Command_AddedMaps_Main);
-	RegConsoleCmd("sm_newmapb", Command_AddedMaps_Bonus);
-	RegConsoleCmd("sm_nmb", Command_AddedMaps_Bonus);
-}
- 
-public Action Command_AddedMaps(int client, int args)
-{
-	SelectTrackMenu(client);
-	return Plugin_Handled;
-}
- 
-public Action Command_AddedMaps_Main(int client, int args)
-{
-	BuildMenu(client, 0);
-	return Plugin_Handled;
-}
- 
-public Action Command_AddedMaps_Bonus(int client, int args)
-{
-	BuildMenu(client, 1);
-	return Plugin_Handled;
-}
- 
-SelectTrackMenu(client)
-{
-	Menu menu = new Menu(Handler_SelectTrack);
-	menu.SetTitle("Select a track");
+  	gA_NewestMaps = new ArrayList(sizeof(MapInfo));
+	RegConsoleCmd("sm_newmaps", NewestMaps, "List maps recently uploaded to the server. Sorting by date of upload.");
 	
-	menu.AddItem("0", "Main");
-	menu.AddItem("1", "Bonus");
- 
-	menu.ExitButton = true;
+	gCV_MaxMapsToShow = new Convar("max_maps_to_show", "25", "How many maps to print in the menu?", 0, true, 1.0, true, 100.0);
+	
+	Convar.AutoExecConfig();
+}
+
+public Action NewestMaps(int client, int args) 
+{
+	if(!IsValidClient(client))
+	{
+		return Plugin_Handled;
+	}
+
+	UpdateMapsList();
+	NewMapsMenu(client);
+
+	return Plugin_Handled;
+}
+
+void NewMapsMenu(int client)
+{
+	Menu menu = new Menu(Handler_NewestMaps, MENU_ACTIONS_ALL);
+	menu.SetTitle("New maps (Showing %i newest):\nTime | Map [Tier]", gCV_MaxMapsToShow.IntValue);
+
+	int i_MapsCount = (gCV_MaxMapsToShow.IntValue < gA_NewestMaps.Length) ? gCV_MaxMapsToShow.IntValue : gA_NewestMaps.Length;
+
+	for (int i = 0; i < i_MapsCount; i++)
+	{
+		MapInfo MapInfo_RecentUploads;
+		gA_NewestMaps.GetArray(i, MapInfo_RecentUploads);
+
+		int MapTier = Shavit_GetMapTier(MapInfo_RecentUploads.MapName);
+
+		char TimeParsed[32];
+		FormatTime(TimeParsed, 32, "%Y/%m/%d %H:%M", MapInfo_RecentUploads.TimeStamp);
+
+		char Display[255];
+		Format(Display, 255, "%s | %s [T%i]", TimeParsed, MapInfo_RecentUploads.MapName, MapTier);
+
+		menu.AddItem(MapInfo_RecentUploads.MapName, Display);
+	}
+
 	menu.Display(client, MENU_TIME_FOREVER);
 }
- 
-public int Handler_SelectTrack(Menu menu, MenuAction action, int client, int param2)
+
+public int Handler_NewestMaps(Menu menu, MenuAction action, int client, int choice)
 {
 	if(action == MenuAction_Select)
-	{		
-		char sType[2];
-		GetMenuItem(menu, param2, sType, sizeof(sType));
-		BuildMenu(client, StringToInt(sType));
-	}
-	else if(action == MenuAction_End)
 	{
-		delete menu;
+		char Handler_MapName[256];
+		menu.GetItem(choice, Handler_MapName, 256);
+
+		FakeClientCommand(client, "sm_nominate %s", Handler_MapName);
+
+		menu.Display(client, MENU_TIME_FOREVER);
 	}
- 
+
 	return 0;
 }
- 
-BuildMenu(client, type)
+
+stock void UpdateMapsList()
 {
-	char sQuery[256];
-	FormatEx(sQuery, sizeof(sQuery), "SELECT distinct map from `mapzones`WHERE `track`=%d AND `type`<=1 ORDER BY `id` DESC LIMIT 50;", type);
-	SQL_TQuery(Shavit_GetDatabase(), SQL_GetMaps, sQuery, GetClientUserId(client), DBPrio_Normal);
-}
- 
-public void SQL_GetMaps(Handle owner, Handle hndl, const char[] error, any data)
-{
-	if(hndl == null)
+	gA_NewestMaps.Clear();
+
+	char path[PLATFORM_MAX_PATH];
+	Handle dir = OpenDirectory("maps/");
+
+	if(dir != INVALID_HANDLE)
 	{
-		LogError("Timer error! Failed to build recently added maps menu!. Reason: %s", error);
-		return;
+		char MapName[PLATFORM_MAX_PATH];
+		FileType type; 
+		while (ReadDirEntry(dir, MapName, PLATFORM_MAX_PATH, type))
+		{
+			if(type == FileType_File && StrContains(MapName, ".bsp", false) != -1) 
+			{
+				Format(path, PLATFORM_MAX_PATH, "%s/%s", "maps", MapName);
+				MapInfo MapInfo_RecentUploads;
+				ReplaceString(MapName, PLATFORM_MAX_PATH, ".bsp", "", false);
+				MapInfo_RecentUploads.MapName = MapName;
+				MapInfo_RecentUploads.TimeStamp = GetFileTime(path, FileTime_LastChange);
+
+				gA_NewestMaps.PushArray(MapInfo_RecentUploads);
+			}
+		}
+
+		CloseHandle(dir);
 	}
- 
-	int client = GetClientOfUserId(data);
+	else
+	{
+		PrintToServer("Failed to open the /maps directory.");
+	}
 	
-	Menu menu = new Menu(Handler_RecentMaps);
-	menu.SetTitle("Recently Added Maps");
-	
-	char sMap[128];
-	while(SQL_FetchRow(hndl))
-	{
-		SQL_FetchString(hndl, 0, sMap, sizeof(sMap));
-		menu.AddItem(sMap, sMap);
-	}
- 
-	menu.ExitButton = true;
-	SetMenuExitBackButton(menu, true);
-	menu.Display(client, MENU_TIME_FOREVER);
-}
- 
-public int Handler_RecentMaps(Menu menu, MenuAction action, int client, int param2)
-{
-	if(action == MenuAction_Select)
-	{		
-		char sMap[64];
-		GetMenuItem(menu, param2, sMap, sizeof(sMap));
-		FakeClientCommand(client, "sm_nominate %s", sMap);
-	}
-	else if (action == MenuAction_Cancel)
-	{
-		if(param2 == MenuCancel_ExitBack)
-			SelectTrackMenu(client);
-	}
-	if(action == MenuAction_End)
-	{
-		delete menu;
-	}
- 
-	return 0;
+	gA_NewestMaps.Sort(Sort_Descending, Sort_Integer);
 }
