@@ -1,5 +1,4 @@
 /* Header files */
-#include <sourcemod>
 #include <shavit/rankings>
 #include <convar_class>
 
