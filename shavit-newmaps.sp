@@ -1,6 +1,5 @@
 /* Header files */
-#include <sourcemod>
-#include <shavit>
+#include <shavit/rankings>
 #include <convar_class>
 
 /* Preprocessor directives */
@@ -41,11 +40,6 @@ public void OnPluginStart()
 
 public Action NewestMaps(int client, int args) 
 {
-	if(!IsValidClient(client))
-	{
-		return Plugin_Handled;
-	}
-
 	UpdateMapsList();
 	NewMapsMenu(client);
 
