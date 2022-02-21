@@ -87,10 +87,7 @@ public int Handler_NewestMaps(Menu menu, MenuAction action, int client, int choi
 
 		FakeClientCommand(client, "sm_nominate %s", Handler_MapName);
 
-		// menu.Display(client, MENU_TIME_FOREVER);
-		// There is no need to add the below "else if"
-		// if the menu handler has "MENU_TIME_FOREVER" as a secondary argument. That doesn't cause a memory leak at all.
-		// However, thank you Bara for letting me know about that and thank you .sneaK so I could examine more.
+		NewMapsMenu(client);
 
 	}
 	else if (action == MenuAction_End)
