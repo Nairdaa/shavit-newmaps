@@ -1,4 +1,5 @@
 /* Header files */
+#include <sourcemod>
 #include <shavit/rankings>
 #include <convar_class>
 
@@ -40,6 +41,11 @@ public void OnPluginStart()
 
 public Action NewestMaps(int client, int args) 
 {
+//	if(!IsValidClient(client))
+//	{
+//		return Plugin_Handled;
+//	}
+
 	UpdateMapsList();
 	NewMapsMenu(client);
 
