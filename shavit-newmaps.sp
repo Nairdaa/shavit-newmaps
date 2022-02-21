@@ -86,7 +86,11 @@ public int Handler_NewestMaps(Menu menu, MenuAction action, int client, int choi
 		menu.GetItem(choice, Handler_MapName, 256);
 
 		FakeClientCommand(client, "sm_nominate %s", Handler_MapName);
-
+		
+		// I really am fucking retarded apparently. 
+		// Thank you Bara for noticing. 
+		// Thank you .sneaK for pushing me to examine. 
+		// Thank you GAMMACASE for being patient yet again and explaining stuff to me like you were dealing with a retard, which you apparently have.
 		NewMapsMenu(client);
 
 	}
