@@ -20,7 +20,7 @@ public Plugin myinfo =
 	/* Thank you so much, Deadwinter */
 	description = "Shows recently uploaded maps to the server.",
 	url = "https://steamcommunity.com/id/nairda1339/"
-};
+}
 
 enum struct MapInfo 
 {
