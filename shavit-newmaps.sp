@@ -45,19 +45,18 @@ public Action NewestMaps(int client, int args)
 void NewMapsMenu(int client)
 {
 	Menu menu = new Menu(Handler_NewestMaps);
-	menu.SetTitle("Newest Maps (Showing %i):", gCV_MaxMapsToShow.IntValue);
-
+	
 	int mapsToShow = (gCV_MaxMapsToShow.IntValue < gA_NewestMaps.Length) ? gCV_MaxMapsToShow.IntValue : gA_NewestMaps.Length;
+	menu.SetTitle("Newest Maps (Showing %i):", mapsToShow);
 
 	for (int i = 0; i < mapsToShow; i++)
 	{
 		MapInfo map;
 		gA_NewestMaps.GetArray(i, map);
 
-		int tier = Shavit_GetMapTier(map.MapName);
 		char time[32], display[255];
 		FormatTime(time, sizeof(time), "%Y/%m/%d %H:%M", map.TimeStamp);
-		Format(display, sizeof(display), "%s | %s [T%i]", time, map.MapName, tier);
+		Format(display, sizeof(display), "%s | %s [T%i]", time, map.MapName, Shavit_GetMapTier(map.MapName));
 
 		menu.AddItem(map.MapName, display);
 	}
@@ -85,7 +84,7 @@ void UpdateMapsList()
 {
 	gA_NewestMaps.Clear();
 	Handle dir = OpenDirectory("maps/");
-	
+
 	if (dir == INVALID_HANDLE)
 	{
 		PrintToServer("Failed to open maps directory.");
@@ -93,19 +92,17 @@ void UpdateMapsList()
 	}
 
 	char mapName[PLATFORM_MAX_PATH], path[PLATFORM_MAX_PATH];
-	FileType type;
 
-	while (ReadDirEntry(dir, mapName, sizeof(mapName), type))
+	while (ReadDirEntry(dir, mapName, sizeof(mapName)) && StrContains(mapName, ".bsp", false) != -1)
 	{
-		if (type == FileType_File && StrContains(mapName, ".bsp", false) != -1)
-		{
-			Format(path, sizeof(path), "maps/%s", mapName);
-			MapInfo map;
-			map.TimeStamp = GetFileTime(path, FileTime_LastChange);
-			strcopy(map.MapName, sizeof(map.MapName), mapName);
-			ReplaceString(map.MapName, sizeof(map.MapName), ".bsp", "", false);
-			gA_NewestMaps.PushArray(map);
-		}
+		Format(path, sizeof(path), "maps/%s", mapName);
+		
+		MapInfo map;
+		map.TimeStamp = GetFileTime(path, FileTime_LastChange);
+		strcopy(map.MapName, sizeof(map.MapName), mapName);
+		ReplaceString(map.MapName, sizeof(map.MapName), ".bsp", "", false);
+
+		gA_NewestMaps.PushArray(map);
 	}
 
 	CloseHandle(dir);
